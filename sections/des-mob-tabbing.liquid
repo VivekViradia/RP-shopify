@@ -1,0 +1,392 @@
+
+<link rel="stylesheet" href="{{ 'component-slider.css' | asset_url }}" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="{{ 'template-collection.css' | asset_url }}" media="print" onload="this.media='all'">
+<noscript>{{ 'component-slider.css' | asset_url | stylesheet_tag }}</noscript>
+<noscript>{{ 'template-collection.css' | asset_url | stylesheet_tag }}</noscript>
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.60 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.60 | round: 0 }}px;
+  }
+
+  @media screen and (min-width:992px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<style>
+  [data-tab-info] {display: none;}
+  .active[data-tab-info] { display: flex; }
+  @media screen and (max-width:991px){
+	.active[data-tab-info] {padding:0 2rem;}
+  }
+</style>
+
+{%- liquid
+  assign products_to_display = section.settings.collection.all_products_count
+
+  if section.settings.collection.all_products_count > section.settings.products_to_show
+    assign products_to_display = section.settings.products_to_show
+    assign more_in_collection = true
+  endif
+
+  assign columns_mobile_int = section.settings.columns_mobile | plus: 0
+  assign show_mobile_slider = false
+  if section.settings.swipe_on_mobile and products_to_display > columns_mobile_int
+    assign show_mobile_slider = true
+  endif
+
+  assign show_desktop_slider = false
+  if section.settings.enable_desktop_slider and products_to_display > section.settings.columns_desktop
+    assign show_desktop_slider = true
+  endif
+-%}
+<div class="{{ section.settings.extraclass }}">
+  <div class="section-tab-accordion-main section-{{ section.id }}-padding">
+  	<div class="page-width">
+      <div class="collection__title">
+        {%- if section.settings.title != blank -%}
+            <h2 class="title {{ section.settings.heading_size }}">{{ section.settings.title | escape }}</h2>
+        {%- endif -%}
+        <div class="rich-text__text rte{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+        {{ block.shopify_attributes }}>
+            {{ section.settings.text }}
+        </div>
+        {%- if section.settings.description != blank or section.settings.show_description and section.settings.collection.description != empty -%}
+            <div class="collection__description {{ section.settings.description_style }}">{%- if section.settings.show_description -%}{{ section.settings.collection.description }}{%- else -%}{{ section.settings.description }}{% endif %}</div>
+        {%- endif -%}
+      </div>
+      <div class="section-tab-main">
+        <div class="section-tab-link">
+  			<ol>
+                {% assign count = 0 %}
+    			{%- for block in section.blocks -%}
+    				<li class="{% if block.settings.image_icon != blank %}tab-icon {% else %}number-block{% endif %}">
+                      {%- if block.settings.image_icon != blank -%}
+                        {%- assign image_size_2x = block.settings.image_width | times: 2 | at_most: 5760 -%}
+                            <div class="grid__item_block__icon">
+                                <img
+                                  srcset="{{ block.settings.image_icon | image_url: width: block.settings.image_width }}"
+                                  src="{{ block.settings.image_icon | image_url: width: 760 }}"
+                                  alt="{{ block.settings.image_icon.alt | escape }}"
+                                  loading="lazy"
+                                  width="{{ block.settings.image_icon.width }}"
+                                  height="{{ block.settings.image_icon.height }}"
+                                >
+                            </div>
+                      {%- endif -%}
+                      <span data-tab-value="#tab_{{ block.settings.title | replace: " ", "_" | replace: "&", "_" |  escape }}" title="" {% if count == 0 %} {% assign count = count | plus: 1 %} class="active" {% endif %} >
+                        {{ block.settings.title | escape }}
+                      </span>
+                    </li>
+  				{%- endfor -%}
+  			</ol>
+  		</div>
+  		<div class="section-tab-details">
+  			{% assign count = 0 %}
+  				{%- for block in section.blocks -%}
+  					{%- case block.type -%}
+  						{%- when 'collection' -%}
+  						{% if count == 0 %}
+  							{% assign count = count | plus: 1 %}
+  							<div class="page-width contains-content-container grid grid--2-col-tablet-down grid--2-col-desktop active" id="tab_{{ block.settings.title | replace: " ", "_" | replace: "&", "_" | escape }}" data-tab-info >
+  						{% else %}
+  						   <div class="page-width contains-content-container grid grid--2-col-tablet-down grid--2-col-desktop" id="tab_{{ block.settings.title | replace: " ", "_" | replace: "&", "_" | escape }}" data-tab-info >
+  						{% endif %}
+  							 <div class="grid__item">
+  								 <div class="rt-image">
+  									{%- if block.settings.image != blank -%}
+  										{%- assign image_size_2x = block.settings.image_width | times: 2 | at_most: 5760 -%}
+  										<div class="grid__item_block__image-wrapper global-media-settings">
+  											<img
+  											  srcset="{{ block.settings.image | image_url: width: block.settings.image_width }}"
+  											  src="{{ block.settings.image | image_url: width: 760 }}"
+  											  alt="{{ block.settings.image.alt | escape }}"
+  											  loading="lazy"
+  											  width="{{ block.settings.image.width }}"
+  											  height="{{ block.settings.image.height }}"
+  											>
+  										</div>
+  									{%- endif -%}
+  								 </div>
+  								 <div class="multicolumn-card__info">
+  									{%- if block.settings.text != blank -%}
+  									  <div class="rte">{{ block.settings.text }}</div>
+  									{%- endif -%}
+  									{%- if block.settings.link_label != blank -%}
+  									  <a class="button button--{{ section.settings.show_dark_button }} button--{{ section.settings.button_size }}" {% if block.settings.link == blank %}role="link" aria-disabled="true"{% else %}href="{{ block.settings.link }}"{% endif %}>{{ block.settings.link_label | escape }}</a>
+  									{%- endif -%}
+  								  </div>
+  							 </div>   
+  						{% if count == 0 %}
+  							</div>
+  						{% else %}
+  							</div>
+  						{% endif %}
+  					{%- endcase -%}
+  				{%- endfor -%}
+  		</div>
+      </div>
+  		<div class="section-tab-accordion">
+  			<ol>
+  				{%- for block in section.blocks -%}
+  				<li class="{% if block.settings.image_icon != blank %}tab-icon {% else %}number-block{% endif %}">
+  					<div class="product__accordion accordion quick-add-hidden product__description__accordion" {{ block.shopify_attributes }}>
+  					  <details id="Details-{{ block.id }}-{{ section.id }}" {% if forloop.first %} open {% endif %}>
+  						<summary>
+  						  <div class="summary__title">
+  							<h2 class="h4 accordion__title inline-richtext label">
+                                {%- if block.settings.image_icon != blank -%}
+                                  {%- assign image_size_2x = block.settings.image_width | times: 2 -%}
+                                      <div class="grid__item_block__icon">
+                                          <img
+                                            srcset="{{ block.settings.image_icon | image_url: width: block.settings.image_width }}"
+                                            src="{{ block.settings.image_icon | image_url: width: 760 }}"
+                                            alt="{{ block.settings.image_icon.alt | escape }}"
+                                            loading="lazy"
+                                            width="{{ block.settings.image_icon.width }}"
+                                            height="{{ block.settings.image_icon.height }}"
+                                          >
+                                      </div>
+                                {%- endif -%}
+  								{%- if block.settings.title != blank -%}
+                                  <span>{{ block.settings.title }}</span>
+  								{%- endif -%}
+  							</h2>
+  						  </div>
+                          <div class="icons">
+    						{% render 'icon-plus' %}
+                            {% render 'icon-minus' %}
+                          </div>                  
+  						</summary>
+  						<div class="accordion__content rte" id="ProductAccordion-{{ block.id }}-{{ section.id }}">
+  						 <div class="product__description rte quick-add-hidden" id="first_product_description" {{ block.shopify_attributes }}>
+  						   <div class="rt-image">
+  							  {%- if block.settings.image != blank -%}
+  							  {%- assign image_size_2x = block.settings.image_width | times: 2 | at_most: 5760 -%}
+  								<div
+  								  class="grid__item_block__image-wrapper global-media-settings"
+  								>
+  								  <img
+  									srcset="{{ block.settings.image | image_url: width: block.settings.image_width }}, {{ block.settings.image | image_url: width: image_size_2x }} 2x"
+  									src="{{ block.settings.image | image_url: width: 760 }}"
+  									alt="{{ block.settings.image.alt | escape }}"
+  									loading="lazy"
+  									width="{{ block.settings.image.width }}"
+  									height="{{ block.settings.image.height }}"
+  								  >
+  								</div>
+  							  {%- endif -%}
+  							</div>
+  							 {%- if block.settings.text != blank -%}
+  							  <div class="rte-text">{{ block.settings.text }}</div>
+  							{%- endif -%}
+  							{%- if block.settings.link_label != blank -%}
+                              <a class="button banner--mobile-bottom button--{{ section.settings.show_dark_button }} button--{{ section.settings.button_size }}" {% if block.settings.link == blank %}role="link" aria-disabled="true"{% else %}href="{{ block.settings.link }}"{% endif %}>{{ block.settings.link_label | escape }}</a>
+                            {%- endif -%}
+  						  </div>
+  						</div>
+  						 </details>
+  					  </div>
+  				</li>
+  				{% endfor %}
+  			</ol>
+  		</div>	
+  	</div>
+  </div>
+</div>    
+<script type="text/javascript">
+  const tabs = document.querySelectorAll('[data-tab-value]')
+  const tabInfos = document.querySelectorAll('[data-tab-info]')
+  
+  tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+          const target = document
+              .querySelector(tab.dataset.tabValue);
+  
+          tabInfos.forEach(tabInfo => {
+              tabInfo.classList.remove('active')
+          })
+
+          tabs.forEach(tab => {
+              tab.classList.remove('active')
+          })
+
+          target.classList.add('active');  
+          tab.classList.add('active');        
+      })
+  })
+
+$(document).ready(function() {
+     $('.feature-category-tag-main ul li:first-child span').addClass('active');
+});
+</script>  
+
+{% schema %}
+{
+  "name": "des-mob-tabbing",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Featured collection",
+      "label": "t:sections.featured-collection.settings.title.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_size.options__1.label"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_size.options__2.label"
+        },
+        {
+          "value": "h0",
+          "label": "t:sections.all.heading_size.options__3.label"
+        }
+      ],
+      "default": "h1",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "default": "<p>Share information about your brand with your customers. Describe a product, make announcements, or welcome customers to your store.</p>",
+      "label": "t:sections.rich-text.blocks.text.settings.text.label"
+    },
+    {
+      "type": "text",
+      "id": "extraclass",
+      "label": "Custom Class"
+    },
+    {
+      "type": "select",
+      "id": "show_dark_button",
+      "options": [
+        {
+          "value": "primary",
+          "label": "Primary"
+        },
+        {
+          "value": "secondary",
+          "label": "Secondary"
+        },
+        {
+          "value": "quaternary",
+          "label": "Quaternary"
+        }
+      ],
+      "default": "primary",
+      "label": "Show Secondary Buttons"
+    },
+    {
+      "type": "select",
+      "id": "button_size",
+      "options": [
+        {
+          "value": "lg",
+          "label": "Large"
+        },
+        {
+          "value": "md",
+          "label": "Medium"
+        },
+        {
+          "value": "sm",
+          "label": "Small"
+        },
+        {
+          "value": "xs",
+          "label": "Extra small"
+        }
+      ],
+      "default": "sm",
+      "label": "Buttons Size"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "t:sections.collage.blocks.collection.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.multicolumn.blocks.column.settings.image.label"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_icon",
+          "label": "Title Icon"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Column",
+          "label": "t:sections.multicolumn.blocks.column.settings.title.label"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "default": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>",
+          "label": "t:sections.multicolumn.blocks.column.settings.text.label"
+        },
+        {
+          "type": "text",
+          "id": "link_label",
+          "label": "Button label"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Button link"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 10,
+  "presets": [
+    {
+      "name": "des-mob-tabbing",
+      "blocks": [
+        {
+          "type": "collection"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
